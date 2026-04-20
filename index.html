@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CHRONOS QUIZ — El Asombro, la Duda y las Situaciones Límite</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050a0e; --bg2:#0a1520; --bg3:#0f1e2e;
+  --gold:#ffb300; --gold2:#ff8c00;
+  --cyan:#00e5ff; --green:#00ff88; --red:#ff3b5c;
+  --purple:#b44fff; --white:#f0f8ff; --dim:#8aa0b0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--white);
+  font-family:'Share Tech Mono',monospace;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);
+  pointer-events:none;z-index:9999;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+
+/* PARTÍCULAS */
+.particle{position:fixed;width:4px;height:4px;border-radius:50%;animation:rise linear forwards;pointer-events:none;z-index:1;}
+@keyframes rise{0%{transform:translateY(100vh) scale(1);opacity:1;}100%{transform:translateY(-10vh) scale(0);opacity:0;}}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;z-index:10;overflow-y:auto;}
+.screen.active{display:flex;}
+
+/* ── INTRO ── */
+#screen-intro{background:radial-gradient(ellipse 80% 70% at 50% 40%,#0a1a2a 0%,var(--bg) 70%);}
+.intro-badge{
+  font-family:'Press Start 2P',monospace;font-size:.5rem;
+  letter-spacing:.3em;color:var(--cyan);margin-bottom:1.5rem;
+  border:1px solid var(--cyan);padding:.4rem .8rem;
+  text-transform:uppercase;opacity:.8;
+}
+.intro-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(.8rem,3.5vw,1.2rem);
+  color:var(--gold);line-height:1.7;text-align:center;
+  text-shadow:0 0 30px var(--gold2),0 0 60px rgba(255,179,0,.3);
+  margin-bottom:.6rem;
+}
+.intro-sub{
+  font-family:'Orbitron',sans-serif;font-size:.85rem;
+  color:var(--cyan);letter-spacing:.15em;text-align:center;
+  margin-bottom:1.5rem;opacity:.8;
+}
+.intro-greek{
+  font-size:.85rem;letter-spacing:.35em;color:var(--gold2);
+  margin-bottom:2rem;text-align:center;opacity:.7;
+}
+.intro-desc{
+  font-size:1rem;color:#aabbc8;text-align:center;
+  max-width:500px;line-height:1.9;margin-bottom:2.5rem;
+}
+
+/* BOTONES */
+.btn{
+  font-family:'Orbitron',sans-serif;font-size:.7rem;
+  font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  border:none;cursor:pointer;padding:.9rem 2.2rem;
+  transition:all .15s;position:relative;overflow:hidden;
+}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 20px var(--gold),0 0 40px rgba(255,179,0,.3);}
+.btn-primary:active{transform:translateY(0);}
+.btn-danger{background:linear-gradient(135deg,var(--red),#c0002a);color:#fff;}
+.btn-danger:hover{box-shadow:0 0 20px var(--red);}
+.btn-outline{background:transparent;color:var(--cyan);border:1px solid var(--cyan);}
+.btn-outline:hover{background:rgba(0,229,255,.1);}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid #1a2a3a;font-size:.6rem;}
+.btn-ghost:hover{color:var(--white);border-color:var(--dim);}
+
+/* ── REGISTRO ── */
+#screen-registro{background:rgba(5,10,14,.97);}
+.reg-title{
+  font-family:'Press Start 2P',monospace;font-size:.75rem;
+  color:var(--gold);margin-bottom:2rem;text-align:center;line-height:1.9;
+}
+.reg-form{display:flex;flex-direction:column;gap:1rem;width:100%;max-width:380px;}
+.reg-label{font-size:.7rem;color:var(--cyan);letter-spacing:.2em;margin-bottom:.3rem;}
+.reg-input{
+  background:var(--bg2);border:1px solid #1a2a3a;
+  color:var(--white);font-family:'Share Tech Mono',monospace;
+  font-size:.95rem;padding:.75rem .9rem;width:100%;
+  outline:none;transition:border-color .2s;
+}
+.reg-input:focus{border-color:var(--gold);}
+.reg-hint{font-size:.65rem;color:var(--dim);text-align:center;margin-top:.5rem;}
+
+/* ── NIVEL ── */
+#screen-nivel{background:radial-gradient(ellipse 80% 70% at 50% 40%,#0a1a2a 0%,var(--bg) 70%);}
+.nivel-title{
+  font-family:'Press Start 2P',monospace;font-size:.75rem;
+  color:var(--gold);margin-bottom:.5rem;text-align:center;line-height:1.9;
+}
+.nivel-player{font-size:.75rem;color:var(--cyan);margin-bottom:2rem;text-align:center;}
+.nivel-cards{display:flex;flex-direction:column;gap:1rem;width:100%;max-width:440px;}
+.nivel-card{
+  background:var(--bg2);border:1px solid #1a2a3a;
+  padding:1.2rem 1.5rem;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.nivel-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;transition:width .2s;}
+.nivel-card.novato::before{background:var(--green);}
+.nivel-card.guerra::before{background:var(--gold);}
+.nivel-card.sabio::before{background:var(--red);}
+.nivel-card:hover{transform:translateX(4px);}
+.nivel-card:hover.novato{border-color:var(--green);box-shadow:0 0 15px rgba(0,255,136,.15);}
+.nivel-card:hover.guerra{border-color:var(--gold);box-shadow:0 0 15px rgba(255,179,0,.15);}
+.nivel-card:hover.sabio{border-color:var(--red);box-shadow:0 0 15px rgba(255,59,92,.15);}
+.nivel-name{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.4rem;}
+.nivel-card.novato .nivel-name{color:var(--green);}
+.nivel-card.guerra .nivel-name{color:var(--gold);}
+.nivel-card.sabio .nivel-name{color:var(--red);}
+.nivel-desc{font-size:.85rem;color:#7a9aaf;line-height:1.7;}
+.nivel-info{font-size:.6rem;color:var(--dim);margin-top:.5rem;letter-spacing:.1em;}
+
+/* ── JUEGO ── */
+#screen-juego{background:var(--bg);justify-content:flex-start;padding:1rem;}
+.hud{width:100%;max-width:620px;display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+.hud-score{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:900;color:var(--gold);}
+.hud-nivel{font-size:.6rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;}
+.hud-combo{font-family:'Press Start 2P',monospace;font-size:.5rem;color:var(--purple);min-width:90px;text-align:right;}
+.timer-bar-wrap{width:100%;max-width:620px;height:4px;background:#0a1520;margin-bottom:1rem;position:relative;}
+.timer-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .1s linear;}
+.q-num{font-size:.7rem;color:var(--dim);letter-spacing:.2em;margin-bottom:.6rem;width:100%;max-width:620px;}
+.q-text{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(.85rem,2.5vw,1.05rem);
+  color:var(--white);line-height:1.75;
+  margin-bottom:1.2rem;width:100%;max-width:620px;
+  min-height:70px;letter-spacing:1px;
+}
+.opciones{display:flex;flex-direction:column;gap:.65rem;width:100%;max-width:620px;}
+.opcion{
+  background:var(--bg2);border:1px solid #1a2a3a;
+  padding:.85rem 1.1rem;cursor:pointer;
+  font-size:1rem;color:#c8d8e4;line-height:1.6;
+  transition:all .15s;display:flex;align-items:flex-start;gap:.8rem;
+  text-align:left;
+}
+.opcion-letra{
+  font-family:'Orbitron',sans-serif;font-size:.65rem;
+  font-weight:700;color:var(--dim);min-width:18px;
+  flex-shrink:0;padding-top:2px;
+}
+.opcion:hover:not(.disabled){border-color:var(--cyan);color:var(--white);box-shadow:0 0 10px rgba(0,229,255,.1);}
+.opcion.correcta{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.05);}
+.opcion.correcta .opcion-letra{color:var(--green);}
+.opcion.incorrecta{border-color:var(--red);color:var(--red);background:rgba(255,59,92,.05);}
+.opcion.incorrecta .opcion-letra{color:var(--red);}
+.opcion.disabled{cursor:default;}
+
+/* FEEDBACK */
+.feedback{
+  width:100%;max-width:620px;
+  font-size:.8rem;min-height:44px;margin-top:.6rem;
+  padding:.55rem .8rem;line-height:1.7;
+  border-left:3px solid transparent;transition:all .3s;
+}
+.feedback.ok{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.05);}
+.feedback.err{border-color:var(--red);color:var(--red);background:rgba(255,59,92,.05);}
+
+/* COMBO */
+.combo-popup{
+  position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Press Start 2P',monospace;font-size:.75rem;
+  color:var(--purple);text-shadow:0 0 20px var(--purple);
+  pointer-events:none;z-index:9000;
+  animation:comboPop .6s ease forwards;
+}
+@keyframes comboPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.5);}
+  40%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}
+  70%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-70%) scale(.9);}
+}
+
+/* RESULTADO */
+#screen-resultado{background:radial-gradient(ellipse 80% 70% at 50% 30%,#0a1a2a 0%,var(--bg) 70%);}
+.res-title{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(.65rem,2.5vw,.95rem);
+  color:var(--gold);text-align:center;line-height:1.9;
+  margin-bottom:.3rem;text-shadow:0 0 20px var(--gold2);
+}
+.res-player{font-size:1rem;color:var(--cyan);text-align:center;margin-bottom:1.5rem;}
+.res-score-big{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(2rem,8vw,3.5rem);
+  color:var(--gold);text-align:center;margin-bottom:.3rem;
+  text-shadow:0 0 30px var(--gold2);
+}
+.res-rank{
+  font-family:'Press Start 2P',monospace;font-size:.6rem;
+  text-align:center;margin-bottom:1.5rem;letter-spacing:.15em;
+}
+.res-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:.6rem;
+  width:100%;max-width:380px;margin-bottom:1.5rem;
+}
+.res-stat{background:var(--bg2);border:1px solid #1a2a3a;padding:.75rem;text-align:center;}
+.res-stat-val{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--cyan);}
+.res-stat-lbl{font-size:.7rem;color:var(--dim);letter-spacing:.15em;margin-top:.2rem;}
+.envio-status{font-size:.85rem;color:var(--dim);text-align:center;margin-bottom:.8rem;min-height:18px;letter-spacing:.1em;}
+.res-btns{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;}
+
+/* PROGRESO DOTS */
+.dots-row{display:flex;gap:.35rem;justify-content:center;margin-bottom:.8rem;width:100%;max-width:620px;flex-wrap:wrap;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--dim);transition:background .3s;}
+.dot.ok{background:var(--green);}
+.dot.err{background:var(--red);}
+.dot.cur{background:var(--gold);box-shadow:0 0 6px var(--gold);}
+
+/* RESPONSIVE */
+@media(max-width:420px){
+  .intro-title{font-size:.75rem;}
+  .q-text{font-size:.9rem;}
+  .opcion{font-size:.9rem;padding:.7rem .85rem;}
+  .res-score-big{font-size:2rem;}
+}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--dim);}
+</style>
+</head>
+<body>
+
+<!-- ══ INTRO ══ -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-badge">⚡ Unidad I · Tema 1.4</div>
+  <div class="intro-title">El Asombro, la Duda<br>y las Situaciones Límite<br>— QUIZ —</div>
+  <div class="intro-sub">Aristóteles · Descartes · Jaspers</div>
+  <div class="intro-greek">ΘΑΥΜΑΖΕΙΝ · COGITO · GRENZSITUATIONEN</div>
+  <div class="intro-desc">
+    Ponés a prueba tu conocimiento sobre el asombro filosófico,
+    la duda metódica de Descartes y las situaciones límite de Jaspers.
+    Tres filósofos, tres caminos hacia el filosofar.
+  </div>
+  <button class="btn btn-primary" onclick="irA('screen-registro')">▶ COMENZAR</button>
+  <div style="margin-top:1rem;">
+    <a href="index.html" style="font-size:.7rem;color:var(--dim);text-decoration:none;letter-spacing:.1em;">
+      ← Volver al contenido del tema
+    </a>
+  </div>
+</div>
+
+<!-- ══ REGISTRO ══ -->
+<div id="screen-registro" class="screen">
+  <div class="reg-title">IDENTIFICACIÓN<br>DEL FILÓSOFO</div>
+  <div class="reg-form">
+    <div>
+      <div class="reg-label">// NOMBRE</div>
+      <input class="reg-input" id="reg-nombre" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name">
+    </div>
+    <div>
+      <div class="reg-label">// APELLIDO</div>
+      <input class="reg-input" id="reg-apellido" type="text" placeholder="Tu apellido" maxlength="30" autocomplete="family-name">
+    </div>
+    <div>
+      <div class="reg-label">// CURSO</div>
+      <input class="reg-input" id="reg-curso" type="text" placeholder="Ej: 6" maxlength="10">
+    </div>
+    <button class="btn btn-primary" onclick="guardarRegistro()">CONTINUAR →</button>
+    <div class="reg-hint">Tus datos se usan solo para el registro del quiz.</div>
+  </div>
+</div>
+
+<!-- ══ NIVEL ══ -->
+<div id="screen-nivel" class="screen">
+  <div class="nivel-title">ELEGÍ TU<br>DIFICULTAD</div>
+  <div class="nivel-player" id="nivel-player-name"></div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:.65rem;color:var(--gold);letter-spacing:.1em;text-align:center;margin-bottom:.8rem;border:1px solid var(--gold2);padding:.5rem 1rem;opacity:.85;max-width:440px;">⚠ COMPLETÁ LOS 3 NIVELES PARA REGISTRAR TU CALIFICACIÓN</div>
+  <div class="nivel-cards">
+    <div class="nivel-card novato" onclick="iniciarJuego('novato')">
+      <div class="nivel-name">⚡ APRENDIZ — Conceptos Fundamentales</div>
+      <div class="nivel-desc">8 preguntas · 20 segundos cada una<br>Thaumazein, Cogito, Situaciones Límite básicas</div>
+      <div class="nivel-info">// DIFICULTAD BÁSICA · TIMER MODERADO</div>
+    </div>
+    <div class="nivel-card guerra" onclick="iniciarJuego('guerra')">
+      <div class="nivel-name">⚔ FILÓSOFO — Análisis y Profundidad</div>
+      <div class="nivel-desc">10 preguntas · 15 segundos cada una<br>Etapas de la duda, Jaspers y Existenz, conexiones</div>
+      <div class="nivel-info">// DIFICULTAD MEDIA · TIMER AJUSTADO</div>
+    </div>
+    <div class="nivel-card sabio" onclick="iniciarJuego('sabio')">
+      <div class="nivel-name">🔥 SABIO — Síntesis y Crítica</div>
+      <div class="nivel-desc">10 preguntas · 10 segundos cada una<br>Relaciones entre autores, críticas, conceptos avanzados</div>
+      <div class="nivel-info">// DIFICULTAD ALTA · TIMER EXIGENTE</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JUEGO ══ -->
+<div id="screen-juego" class="screen">
+  <div class="hud">
+    <div class="hud-score" id="hud-score">000000</div>
+    <div class="hud-nivel" id="hud-nivel">APRENDIZ</div>
+    <div class="hud-combo" id="hud-combo"></div>
+  </div>
+  <div class="timer-bar-wrap">
+    <div class="timer-bar" id="timer-bar"></div>
+  </div>
+  <div class="dots-row" id="dots-row"></div>
+  <div class="q-num" id="q-num">PREGUNTA 1 / 8</div>
+  <div class="q-text" id="q-text"></div>
+  <div class="opciones" id="opciones"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<!-- ══ RESULTADO ══ -->
+<div id="screen-resultado" class="screen">
+  <div class="res-title" id="res-title">RESULTADO FINAL</div>
+  <div class="res-player" id="res-player"></div>
+  <div class="res-score-big" id="res-score-big">0</div>
+  <div class="res-rank" id="res-rank"></div>
+  <div class="res-stats">
+    <div class="res-stat">
+      <div class="res-stat-val" id="res-correctas">0</div>
+      <div class="res-stat-lbl">CORRECTAS</div>
+    </div>
+    <div class="res-stat">
+      <div class="res-stat-val" id="res-pct">0%</div>
+      <div class="res-stat-lbl">PRECISIÓN</div>
+    </div>
+    <div class="res-stat">
+      <div class="res-stat-val" id="res-combo">x0</div>
+      <div class="res-stat-lbl">MAX COMBO</div>
+    </div>
+    <div class="res-stat">
+      <div class="res-stat-val" id="res-tiempo">0s</div>
+      <div class="res-stat-lbl">TIEMPO TOTAL</div>
+    </div>
+  </div>
+  <div class="envio-status" id="envio-status"></div>
+  <div class="res-btns">
+    <button class="btn btn-outline" onclick="irNivel()">↩ CAMBIAR NIVEL</button>
+    <button class="btn btn-primary" onclick="reiniciarMismoNivel()">↺ REPETIR</button>
+    <button class="btn btn-ghost" onclick="irA('screen-intro')">⌂ INICIO</button>
+  </div>
+</div>
+
+<script>
+// ══ BANCO DE PREGUNTAS ════════════════════════════════════════════════════════
+const BANCO = {
+
+// ─── NOVATO (8 preguntas) ─────────────────────────────────────────────────
+novato: [
+  {
+    p: "¿Qué significa la palabra griega 'thaumazein' (θαυμάζειν)?",
+    o: ["Conocimiento racional y sistemático","Asombro o admiración ante la realidad","Duda metódica sobre los sentidos","Argumento lógico irrefutable"],
+    c: 1,
+    exp: "Thaumazein significa asombro o admiración. Para Aristóteles es la actitud fundamental que impulsa al ser humano a filosofar: preguntarse por lo que no entiende."
+  },
+  {
+    p: "¿Quién afirmó que los hombres comenzaron a filosofar 'por el asombro'?",
+    o: ["René Descartes","Karl Jaspers","Sócrates de Atenas","Aristóteles"],
+    c: 3,
+    exp: "Aristóteles lo escribió en el Libro I de la Metafísica: 'Los hombres comenzaron a filosofar, ahora como en el principio, por el asombro.'"
+  },
+  {
+    p: "¿Cuál es el punto de partida de la duda metódica de Descartes?",
+    o: ["La lectura de textos sagrados","La desconfianza en los sentidos porque a veces nos engañan","La búsqueda de Dios como fundamento del saber","La experiencia de la muerte como situación límite"],
+    c: 1,
+    exp: "Descartes comienza observando que los sentidos a veces nos engañan. Si me engañaron una vez, son poco confiables. Ese es el primer paso de su método de duda."
+  },
+  {
+    p: "¿Cuál es la conclusión más famosa de Descartes tras aplicar la duda metódica?",
+    o: ["'El hombre es la medida de todas las cosas'","'Solo sé que no sé nada'","'Cogito, ergo sum' — Pienso, luego existo","'El ser es uno, eterno e inmóvil'"],
+    c: 2,
+    exp: "'Pienso, luego existo' es la verdad que resiste toda duda. Aunque me engañen en todo, necesito existir para ser engañado. El pensamiento prueba la existencia."
+  },
+  {
+    p: "¿Quién desarrolló el concepto de 'situaciones límite' (Grenzsituationen)?",
+    o: ["Friedrich Nietzsche","Martin Heidegger","Karl Jaspers","Jean-Paul Sartre"],
+    c: 2,
+    exp: "Karl Jaspers (1883-1969), filósofo y psiquiatra alemán, desarrolló el concepto de situaciones límite para referirse a condiciones de la existencia que no pueden superarse."
+  },
+  {
+    p: "¿Cuáles son las cuatro situaciones límite identificadas por Jaspers?",
+    o: ["Placer, dolor, amor y odio","Muerte, sufrimiento, lucha y culpa","Nacimiento, vida, enfermedad y vejez","Ignorancia, duda, asombro y razón"],
+    c: 1,
+    exp: "Jaspers identifica cuatro: la muerte (propia y ajena), el sufrimiento, la lucha (conflicto inevitable con los demás) y la culpa (la responsabilidad de toda elección)."
+  },
+  {
+    p: "¿Qué caracteriza a una 'situación límite' según Jaspers?",
+    o: ["Es una situación que podemos resolver con tecnología o esfuerzo","Es una condición extrema de la existencia que no se puede cambiar ni evitar","Es un estado de felicidad y plenitud que todos buscamos","Es una situación cotidiana que todos enfrentamos sin mayor dificultad"],
+    c: 1,
+    exp: "Las situaciones límite son condiciones insuperables de la existencia. No se pueden resolver ni eliminar: solo se pueden enfrentar con lucidez o ignorar con evasión."
+  },
+  {
+    p: "¿En qué se diferencia el asombro filosófico del simple desconcierto cotidiano?",
+    o: ["No hay diferencia: todo asombro lleva inevitablemente a la filosofía","El asombro filosófico impulsa a preguntarse por el sentido profundo de la realidad","El asombro cotidiano es siempre más profundo que el filosófico","Solo los filósofos profesionales pueden experimentar el verdadero asombro"],
+    c: 1,
+    exp: "El asombro filosófico no se queda en la sorpresa: impulsa a preguntar, investigar y buscar explicaciones racionales. Es una actitud de apertura permanente ante lo real."
+  }
+],
+
+// ─── GUERRA (10 preguntas) ────────────────────────────────────────────────
+guerra: [
+  {
+    p: "¿En qué obra de Aristóteles aparece la idea del thaumazein como origen de la filosofía?",
+    o: ["Ética a Nicómaco","Política","Metafísica, Libro I","Poética"],
+    c: 2,
+    exp: "En el Libro I de la Metafísica, Aristóteles establece que el asombro es el motor del filosofar, tanto en los orígenes de la filosofía griega como en cada individuo que comienza a pensar."
+  },
+  {
+    p: "¿Qué es el 'argumento del genio maligno' en Descartes?",
+    o: ["Un ser divino que protege la verdad de nuestro pensamiento","Un ser poderoso que podría engañarnos siempre, incluso en las matemáticas","La voz interior de la conciencia moral que alerta sobre el error","El demonio que tentó a los primeros hombres en el Génesis"],
+    c: 1,
+    exp: "Descartes imagina un genio maligno todopoderoso que podría hacernos creer que 2+2=4 cuando es falso. Es el grado más radical de la duda: si tal ser existe, nada es seguro."
+  },
+  {
+    p: "¿Por qué la duda de Descartes se llama 'metódica' y no 'escéptica'?",
+    o: ["Porque dura exactamente un período de tiempo establecido","Porque es un instrumento para encontrar certezas, no un fin en sí misma","Porque se aplica únicamente al campo de las matemáticas","Porque está basada en los métodos científicos del siglo XX"],
+    c: 1,
+    exp: "La duda metódica no busca demostrar que nada puede conocerse (escepticismo). Es provisional: una herramienta para purificar el conocimiento y encontrar una base absolutamente sólida."
+  },
+  {
+    p: "¿Qué plantea el 'argumento del sueño' en la duda metódica de Descartes?",
+    o: ["Que los sueños revelan verdades ocultas del inconsciente","Que no podemos distinguir con certeza si estamos soñando o despiertos","Que la vida es un sueño del que es posible despertar mediante la razón","Que soñar es la actividad más racional del ser humano"],
+    c: 1,
+    exp: "Si los sueños a veces parecen tan reales como la vigilia, ¿cómo sé que ahora no estoy soñando? Este argumento pone en duda toda percepción sensorial de manera radical."
+  },
+  {
+    p: "¿Cómo reacciona auténticamente el ser humano ante una situación límite, según Jaspers?",
+    o: ["Las ignora para mantener la tranquilidad mental","Se paraliza por el miedo y no puede actuar","Las enfrenta con lucidez, y puede convertirlas en ocasión de crecimiento existencial","Las resuelve aplicando métodos racionales y científicos"],
+    c: 2,
+    exp: "Jaspers distingue evasión (ignorar la situación, distraerse) de confrontación lúcida. Solo quien enfrenta las situaciones límite honestamente puede vivir de manera auténtica."
+  },
+  {
+    p: "¿Cómo relaciona Jaspers las situaciones límite con la 'Trascendencia'?",
+    o: ["Las situaciones límite demuestran que la Trascendencia no existe","Al enfrentar los límites de la existencia, el ser humano puede abrirse a algo mayor que sí mismo","La Trascendencia es el estado previo a las situaciones límite","No hay relación entre los conceptos de Jaspers y la Trascendencia"],
+    c: 1,
+    exp: "Para Jaspers, al 'naufragar' ante las situaciones límite y aceptar que no podemos superarlas por medios propios, se abre la posibilidad de una experiencia de la Trascendencia."
+  },
+  {
+    p: "¿Qué relación hay entre el thaumazein de Aristóteles y el reconocimiento de la ignorancia?",
+    o: ["No hay relación: el asombro requiere mucho conocimiento previo","Solo el ignorante puede asombrarse; el sabio ya no se asombra de nada","El asombro nace de ver que no comprendemos algo, lo cual impulsa a buscar conocimiento","El asombro elimina la ignorancia de manera inmediata"],
+    c: 2,
+    exp: "El asombro filosófico surge cuando algo nos resulta inexplicable. Aristóteles lo vincula con reconocer la propia ignorancia: 'sé que no sé', y ese reconocimiento motiva la búsqueda."
+  },
+  {
+    p: "¿Por qué la culpa es una 'situación límite' estructural para Jaspers?",
+    o: ["Porque los tribunales siempre terminan condenando al culpable","Porque toda elección excluye otras posibilidades y genera responsabilidades inevitables","Porque la culpa es un sentimiento que solo tienen los individuos neuróticos","Porque Dios castiga todos los actos equivocados de los seres humanos"],
+    c: 1,
+    exp: "Para Jaspers, la culpa es estructural: toda elección implica responsabilidad por lo que hacemos y por lo que dejamos de hacer. Nadie puede existir sin incurrir en alguna forma de culpa."
+  },
+  {
+    p: "¿Cómo describe Jaspers la actitud de 'evasión' ante las situaciones límite?",
+    o: ["Enfrentar la situación con plena consciencia y sin engañarse","Ignorar, negar o distraerse de la situación para evitar el malestar","Analizar racionalmente la situación y encontrar una solución técnica","Aceptar la situación con resignación pasiva y sin actuar"],
+    c: 1,
+    exp: "La evasión es la actitud opuesta a la autenticidad: distraernos, negar lo que está pasando, llenarnos de actividades para no pensar. Jaspers la considera una forma de no vivir plenamente."
+  },
+  {
+    p: "¿Cuál es la primera verdad absolutamente indudable que Descartes encuentra?",
+    o: ["La existencia de Dios como garantía última del conocimiento","El cogito: la existencia del yo que está pensando en este momento","El mundo exterior como fuente de sensaciones reales y verificables","Las verdades matemáticas como fundamento universal del saber"],
+    c: 1,
+    exp: "Incluso si un genio maligno me engaña en todo, necesita que yo exista para engañarme. El acto de dudar confirma que hay algo que duda, es decir que piensa, es decir que existe."
+  }
+],
+
+// ─── SABIO (10 preguntas) ─────────────────────────────────────────────────
+sabio: [
+  {
+    p: "¿En qué se diferencia el thaumazein de Aristóteles del asombro tal como lo concibe Platón?",
+    o: ["Para Aristóteles el asombro lleva al conocimiento empírico de las cosas; para Platón eleva al mundo de las Ideas separadas","Son idénticos: ambos ven el asombro como inicio de la búsqueda de lo eterno e inmutable","Para Platón no existe el asombro filosófico: solo cuenta la dialéctica racional","Aristóteles rechaza el asombro como base válida del conocimiento filosófico"],
+    c: 0,
+    exp: "Aristóteles parte del asombro ante lo particular y empírico buscando el universal en las cosas mismas. Platón usa el asombro ante lo imperfecto del mundo sensible para elevarse a las Ideas trascendentes."
+  },
+  {
+    p: "¿Qué implicación tiene el 'cogito' cartesiano para la historia de la filosofía occidental?",
+    o: ["Que el conocimiento sensorial y la razón son igualmente confiables como fuentes","Que el yo pensante es la primera certeza, y la subjetividad se convierte en fundamento del saber moderno","Que el conocimiento de Dios necesariamente precede al conocimiento del propio yo","Que la razón humana es perfecta y no puede equivocarse en ningún caso"],
+    c: 1,
+    exp: "El cogito instaura la subjetividad como fundamento del conocimiento moderno. Descartes es el padre del racionalismo: ya no la autoridad ni la tradición, sino la razón propia es juez del saber."
+  },
+  {
+    p: "¿Cómo usa Descartes el concepto de Dios para salir del solipsismo del cogito?",
+    o: ["Dios garantiza la verdad de nuestros sentidos directamente","Un Dios perfecto no puede ser engañador, por tanto lo que percibimos 'clara y distintamente' es verdadero","Dios nos revela las verdades necesarias mediante la revelación bíblica","Dios nos creó para dudar permanentemente y buscar la verdad sin fin"],
+    c: 1,
+    exp: "Descartes argumenta que si Dios existe y es perfecto, no puede engañarme. Por tanto, todo lo que mi razón percibe con claridad y distinción es verdadero. Dios garantiza el puente entre el yo y el mundo."
+  },
+  {
+    p: "¿Qué significa el 'naufragio' (Scheitern) en la filosofía existencial de Jaspers?",
+    o: ["La desesperación absoluta y sin salida que destruye al individuo definitivamente","El momento en que la existencia choca con sus límites y, al aceptar el fracaso, puede abrirse a la Trascendencia","Un fracaso biográfico o profesional que impide el desarrollo de la persona","La pérdida definitiva de la fe religiosa ante el sufrimiento extremo"],
+    c: 1,
+    exp: "El naufragio (Scheitern) es el momento en que el ser humano fracasa ante las situaciones límite. Aceptar ese fracaso sin evasión puede abrirse a la Trascendencia. No es fin: es apertura."
+  },
+  {
+    p: "¿Qué diferencia fundamental existe entre el escepticismo antiguo y la duda metódica de Descartes?",
+    o: ["No hay diferencia real: ambos concluyen que el conocimiento es imposible","El escepticismo concluye que nada puede conocerse; Descartes duda provisionalmente para encontrar certezas absolutas","Descartes es más radical que los escépticos porque nunca sale de la duda","Los escépticos antiguos también llegaron al cogito pero lo rechazaron"],
+    c: 1,
+    exp: "Los escépticos (Pirrón, Sexto Empírico) dudan como conclusión final. Descartes duda como método y herramienta: busca una verdad tan firme que ni siquiera la duda más radical pueda destruirla."
+  },
+  {
+    p: "¿Cómo conecta Jaspers las situaciones límite con el concepto de 'Existenz'?",
+    o: ["La Existenz es el estado de tranquilidad que se logra antes de enfrentar las situaciones límite","Solo al enfrentar auténticamente las situaciones límite el ser humano se convierte en Existenz: existencia propia y única","Las situaciones límite anulan y destruyen toda posibilidad de Existenz auténtica","La Existenz es una construcción racional que no tiene relación con los límites de la vida"],
+    c: 1,
+    exp: "La Existenz designa la dimensión más profunda del ser humano: aquella que solo se revela cuando confrontamos lo que no podemos cambiar. Las situaciones límite nos empujan a ser quienes realmente somos."
+  },
+  {
+    p: "¿Cuál es la relación entre asombro (Aristóteles), duda (Descartes) y situaciones límite (Jaspers) como puntos de partida del filosofar?",
+    o: ["Son teorías contradictorias que se excluyen mutuamente y no pueden articularse","Son tres formas de ruptura con lo cotidiano: el asombro rompe la costumbre, la duda la certeza ingenua, el límite la ilusión de control","Las tres son formas distintas de escepticismo filosófico radical","Las tres llevan al mismo resultado final: el cogito cartesiano como base del saber"],
+    c: 1,
+    exp: "Asombro, duda y situaciones límite son tres 'detonadores' del filosofar: el asombro interrumpe la costumbre de vivir sin preguntar, la duda interrumpe la certeza acrítica, el límite interrumpe la ilusión de que controlamos la existencia."
+  },
+  {
+    p: "¿Qué señala Heidegger como problema del 'yo pienso' cartesiano desde su analítica del Dasein?",
+    o: ["Heidegger considera que Descartes tiene razón en todo y lo sigue fielmente","Descartes parte de un sujeto abstracto desconectado del mundo, ignorando que el Dasein siempre ya está arrojado en él","Heidegger acepta el cogito pero lo reformula como 'existo, luego pienso'","El error de Descartes para Heidegger fue no haber dudado de manera suficientemente radical"],
+    c: 1,
+    exp: "Para Heidegger, el 'yo pienso' cartesiano es una abstracción ilegítima. El Dasein (ser-ahí) siempre está ya-en-el-mundo: no es un sujeto aislado que luego busca el mundo; el mundo lo precede constitutivamente."
+  },
+  {
+    p: "¿Cómo conecta el thaumazein de Aristóteles con el origen de la actitud científica moderna?",
+    o: ["Son opuestos: la ciencia elimina el asombro reemplazándolo por el método","El asombro filosófico es el antecedente directo de la curiosidad que mueve la investigación científica","El asombro filosófico solo corresponde al arte, no a la ciencia ni a la tecnología","La ciencia moderna reemplazó por completo el thaumazein con el método experimental"],
+    c: 1,
+    exp: "El asombro ante lo real que Aristóteles identificó como origen del filosofar es también el impulso que mueve la curiosidad científica. La ciencia es, en parte, el thaumazein institucionalizado en un método."
+  },
+  {
+    p: "¿Por qué la 'lucha' es una situación límite inevitable para Jaspers, incluso en relaciones pacíficas?",
+    o: ["Porque la guerra es el estado natural de los seres humanos según Jaspers","Porque el conflicto de intereses y perspectivas entre personas es constitutivo de la coexistencia humana","Porque Jaspers considera que la paz es siempre una ilusión pasajera destinada a romperse","Porque la lucha solo existe en épocas históricas de guerra o violencia extrema"],
+    c: 1,
+    exp: "Para Jaspers, la lucha no es necesariamente violencia física: es el conflicto inevitable de perspectivas, intereses y proyectos entre seres humanos distintos. Aceptar esto permite relacionarse con mayor honestidad."
+  }
+]
+
+};
+
+// ══ CONFIGURACIÓN ════════════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxHuPBB9MW0pMXNh-i8m48T3DFULKKAMxdu6lzkYRPO20JSPp4OCInpMrKDWrzDhHnN/exec';
+const QUIZ_TEMA   = 4;
+const QUIZ_UNIDAD = 1;
+const LS_KEY      = 'chronos_asombro_jugador';
+
+let jugador     = { nombre:'', apellido:'', curso:'' };
+let nivelActual = '';
+let preguntas   = [];
+let qIdx = 0, score = 0, combo = 0, maxCombo = 0;
+let correctas = 0, cntAgotado = 0;
+let timerInterval = null, timerSeg = 0;
+let tiempoInicio = null, tiempoTotal = 0;
+let respuestas  = [];
+
+const TIEMPOS     = { novato:20, guerra:15, sabio:10 };
+const PUNTOS_BASE = { novato:100, guerra:150, sabio:200 };
+
+// ══ NAVEGACIÓN ═══════════════════════════════════════════════════════════════
+function irA(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function guardarRegistro(){
+  const n = document.getElementById('reg-nombre').value.trim();
+  const a = document.getElementById('reg-apellido').value.trim();
+  const c = document.getElementById('reg-curso').value.trim();
+  if(!n||!a||!c){ alert('Completá todos los campos.'); return; }
+  jugador = {nombre:n, apellido:a, curso:c};
+  localStorage.setItem(LS_KEY, JSON.stringify(jugador));
+  document.getElementById('nivel-player-name').textContent =
+    `// ${n.toUpperCase()} ${a.toUpperCase()} · ${c.toUpperCase()}`;
+  irA('screen-nivel');
+}
+
+function irNivel(){ clearInterval(timerInterval); irA('screen-nivel'); }
+function reiniciarMismoNivel(){ iniciarJuego(nivelActual); }
+
+// ══ JUEGO ═════════════════════════════════════════════════════════════════════
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+function iniciarJuego(nivel){
+  nivelActual = nivel;
+  preguntas = shuffle(BANCO[nivel]);
+  qIdx=0; score=0; combo=0; maxCombo=0; correctas=0; cntAgotado=0; respuestas=[];
+  tiempoInicio = Date.now();
+  document.getElementById('hud-nivel').textContent =
+    {novato:'APRENDIZ',guerra:'FILÓSOFO',sabio:'SABIO'}[nivel];
+  actualizarScore();
+  renderDots();
+  irA('screen-juego');
+  mostrarPregunta();
+}
+
+function renderDots(){
+  const row = document.getElementById('dots-row');
+  row.innerHTML='';
+  preguntas.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className='dot'+(i===0?' cur':'');
+    d.id='dot-'+i;
+    row.appendChild(d);
+  });
+}
+
+function actualizarDot(idx,tipo){
+  const d=document.getElementById('dot-'+idx);
+  if(!d) return;
+  d.className='dot '+tipo;
+  const next=document.getElementById('dot-'+(idx+1));
+  if(next) next.className='dot cur';
+}
+
+function mostrarPregunta(){
+  clearInterval(timerInterval);
+  const q=preguntas[qIdx];
+  const total=preguntas.length;
+  document.getElementById('q-num').textContent=`PREGUNTA ${qIdx+1} / ${total}`;
+  document.getElementById('q-text').textContent=q.p;
+  document.getElementById('feedback').textContent='';
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('hud-combo').textContent=combo>1?`x${combo} COMBO`:'';
+
+  const letras=['A','B','C','D'];
+  const cont=document.getElementById('opciones');
+  cont.innerHTML='';
+  q.o.forEach((op,i)=>{
+    const div=document.createElement('div');
+    div.className='opcion';
+    div.innerHTML=`<span class="opcion-letra">${letras[i]}</span><span>${op}</span>`;
+    div.onclick=()=>responder(i,div);
+    cont.appendChild(div);
+  });
+  iniciarTimer();
+}
+
+function iniciarTimer(){
+  const seg=TIEMPOS[nivelActual];
+  timerSeg=seg;
+  const bar=document.getElementById('timer-bar');
+  bar.style.width='100%';
+  bar.style.background='linear-gradient(90deg,var(--cyan),var(--green))';
+  timerInterval=setInterval(()=>{
+    timerSeg-=.1;
+    const pct=Math.max(0,(timerSeg/seg)*100);
+    bar.style.width=pct+'%';
+    if(pct<30) bar.style.background='linear-gradient(90deg,var(--gold2),var(--red))';
+    else if(pct<60) bar.style.background='linear-gradient(90deg,var(--gold),var(--gold2))';
+    if(timerSeg<=0){ clearInterval(timerInterval); tiempoAgotado(); }
+  },100);
+}
+
+function tiempoAgotado(){
+  deshabilitarOpciones(); combo=0; cntAgotado++;
+  document.getElementById('hud-combo').textContent='';
+  mostrarFeedback(false,`⏱ TIEMPO AGOTADO — ${preguntas[qIdx].exp}`);
+  actualizarDot(qIdx,'err');
+  respuestas.push({ok:false,tiempo:TIEMPOS[nivelActual]});
+  setTimeout(()=>avanzar(),2400);
+}
+
+function responder(idx,el){
+  clearInterval(timerInterval);
+  deshabilitarOpciones();
+  const q=preguntas[qIdx];
+  const tiempoUsado=TIEMPOS[nivelActual]-timerSeg;
+  const esCorrecto=idx===q.c;
+
+  document.querySelectorAll('.opcion')[q.c].classList.add('correcta');
+  if(!esCorrecto) el.classList.add('incorrecta');
+
+  if(esCorrecto){
+    correctas++; combo++;
+    if(combo>maxCombo) maxCombo=combo;
+    const bonusTiempo=Math.round((timerSeg/TIEMPOS[nivelActual])*50);
+    const bonusCombo=combo>1?Math.round(PUNTOS_BASE[nivelActual]*0.2*(combo-1)):0;
+    const pts=PUNTOS_BASE[nivelActual]+bonusTiempo+bonusCombo;
+    score+=pts; actualizarScore();
+    if(combo>=3) showCombo(`🔥 x${combo} COMBO! +${pts}`);
+    crearParticulas(combo>=3?'#b44fff':'#00ff88',combo>=3?12:6);
+    mostrarFeedback(true,`+${pts} pts · ${q.exp}`);
+    actualizarDot(qIdx,'ok');
+  } else {
+    combo=0;
+    document.getElementById('hud-combo').textContent='';
+    mostrarFeedback(false,`✗ INCORRECTO — ${q.exp}`);
+    actualizarDot(qIdx,'err');
+  }
+  respuestas.push({ok:esCorrecto,tiempo:tiempoUsado.toFixed(1)});
+  setTimeout(()=>avanzar(),esCorrecto?1600:2600);
+}
+
+function deshabilitarOpciones(){
+  document.querySelectorAll('.opcion').forEach(o=>o.classList.add('disabled'));
+}
+function mostrarFeedback(ok,txt){
+  const fb=document.getElementById('feedback');
+  fb.textContent=txt; fb.className='feedback '+(ok?'ok':'err');
+}
+function actualizarScore(){
+  document.getElementById('hud-score').textContent=String(score).padStart(6,'0');
+}
+function avanzar(){
+  qIdx++;
+  if(qIdx<preguntas.length) mostrarPregunta(); else finJuego();
+}
+
+function finJuego(){
+  tiempoTotal=Math.round((Date.now()-tiempoInicio)/1000);
+  const total=preguntas.length;
+  const pct=Math.round((correctas/total)*100);
+
+  let rango,color;
+  if(pct>=90){rango='⚡ MAESTRO DEL ASOMBRO';color=getCSSVar('--gold');}
+  else if(pct>=70){rango='📚 FILÓSOFO EXISTENCIAL';color=getCSSVar('--green');}
+  else if(pct>=50){rango='🏛 DISCÍPULO CARTESIANO';color=getCSSVar('--cyan');}
+  else{rango='💡 INICIADO EN EL LÍMITE';color=getCSSVar('--dim');}
+
+  document.getElementById('res-title').textContent='QUIZ COMPLETADO';
+  document.getElementById('res-player').textContent=
+    `${jugador.nombre} ${jugador.apellido} · ${jugador.curso}`;
+  document.getElementById('res-score-big').textContent=score.toLocaleString();
+  document.getElementById('res-rank').style.color=color;
+  document.getElementById('res-rank').textContent=rango;
+  document.getElementById('res-correctas').textContent=`${correctas}/${total}`;
+  document.getElementById('res-pct').textContent=`${pct}%`;
+  document.getElementById('res-combo').textContent=`x${maxCombo}`;
+  document.getElementById('res-tiempo').textContent=`${tiempoTotal}s`;
+
+  irA('screen-resultado');
+  enviarResultado(pct,rango);
+}
+
+function getCSSVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+// ══ ENVÍO ════════════════════════════════════════════════════════════════════
+function enviarResultado(pct,rango){
+  const st=document.getElementById('envio-status');
+  st.textContent='⟳ ENVIANDO RESULTADOS...';
+  const total=preguntas.length;
+  const incorrectas=total-correctas-cntAgotado;
+  const UMBRAL={novato:60,guerra:70,sabio:80};
+  const pctAprobacion=UMBRAL[nivelActual]??60;
+  const aprobado=pct>=pctAprobacion?'SÍ':'NO';
+
+  const payload={
+    nombre:jugador.nombre, apellido:jugador.apellido, curso:jugador.curso,
+    nivel:{novato:1,guerra:2,sabio:3}[nivelActual],
+    score, precision:pct, pctAprobacion, aprobado,
+    correctas, incorrectas,
+    tiempoAgotado:cntAgotado, maxCombo, tiempoTotal, rango,
+    quiz:'El Asombro, la Duda y las Situaciones Límite',
+    unidad:QUIZ_UNIDAD, tema:QUIZ_TEMA,
+    timestamp:new Date().toLocaleString('es-AR')
+  };
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(()=>{ st.textContent='✓ RESULTADO REGISTRADO'; })
+    .catch(()=>{ st.textContent='— Sin conexión · Resultado local'; });
+}
+
+// ══ EFECTOS ══════════════════════════════════════════════════════════════════
+function showCombo(txt){
+  const el=document.createElement('div');
+  el.className='combo-popup'; el.textContent=txt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1400);
+}
+function crearParticulas(color,n){
+  for(let i=0;i<n;i++) setTimeout(()=>{
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=color;
+    p.style.boxShadow=`0 0 6px ${color}`;
+    p.style.animationDuration=(2+Math.random()*3)+'s';
+    p.style.animationDelay=Math.random()*0.4+'s';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),5000);
+  },i*80);
+}
+
+// ══ INIT ═════════════════════════════════════════════════════════════════════
+(function init(){
+  const d=JSON.parse(localStorage.getItem(LS_KEY)||'null');
+  if(d&&d.nombre){
+    jugador=d;
+    document.getElementById('nivel-player-name').textContent=
+      `// ${d.nombre.toUpperCase()} ${d.apellido.toUpperCase()} · ${d.curso.toUpperCase()}`;
+    document.getElementById('reg-nombre').value=d.nombre;
+    document.getElementById('reg-apellido').value=d.apellido;
+    document.getElementById('reg-curso').value=d.curso;
+    irA('screen-intro');
+  }
+})();
+</script>
+</body>
+</html>
