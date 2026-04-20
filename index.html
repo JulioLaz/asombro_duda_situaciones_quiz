@@ -239,6 +239,35 @@ body::after{
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--dim);}
+
+/* ── SELECTOR DE ALUMNOS ── */
+.alumno-search-wrap{width:100%;margin-bottom:.6rem;}
+.alumno-list{
+  width:100%;max-height:240px;overflow-y:auto;
+  border:1px solid #1a2a3a;background:var(--bg2);
+  margin-bottom:.8rem;
+}
+.alumno-item{
+  padding:.65rem .9rem;cursor:pointer;
+  font-size:.9rem;color:#c8d8e4;
+  border-bottom:1px solid #0d1e2d;
+  transition:background .12s;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.alumno-item:last-child{border-bottom:none;}
+.alumno-item:hover{background:rgba(0,229,255,.07);color:var(--white);}
+.alumno-item.selected{background:rgba(255,179,0,.1);border-left:3px solid var(--gold);color:var(--gold);}
+.alumno-item .alumno-nombres{font-size:.8em;color:var(--dim);margin-left:.4rem;}
+.alumno-item .alumno-dni{font-size:.65rem;color:var(--dim);white-space:nowrap;margin-left:.5rem;}
+.alumno-item.selected .alumno-dni{color:var(--gold2);}
+.alumno-loading{padding:1rem;text-align:center;color:var(--dim);font-size:.8rem;letter-spacing:.1em;}
+.alumno-selected-box{
+  width:100%;padding:.6rem .9rem;margin-bottom:.8rem;
+  border:1px solid var(--gold);background:rgba(255,179,0,.06);
+  font-size:.8rem;color:var(--gold);letter-spacing:.05em;
+  display:none;
+}
+.alumno-selected-box .dni-tag{color:var(--gold2);font-size:.7rem;margin-left:.5rem;}
 </style>
 </head>
 <body>
@@ -266,20 +295,21 @@ body::after{
 <div id="screen-registro" class="screen">
   <div class="reg-title">IDENTIFICACIÓN<br>DEL FILÓSOFO</div>
   <div class="reg-form">
-    <div>
-      <div class="reg-label">// NOMBRE</div>
-      <input class="reg-input" id="reg-nombre" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="given-name">
+    <div class="alumno-search-wrap">
+      <div class="reg-label">// BUSCÁ TU APELLIDO</div>
+      <input class="reg-input" id="reg-search" type="text" placeholder="Escribí tu apellido..." autocomplete="off" oninput="filtrarAlumnos()">
     </div>
-    <div>
-      <div class="reg-label">// APELLIDO</div>
-      <input class="reg-input" id="reg-apellido" type="text" placeholder="Tu apellido" maxlength="30" autocomplete="family-name">
+    <div class="alumno-list" id="alumno-list">
+      <div class="alumno-loading">⟳ CARGANDO LISTADO...</div>
     </div>
-    <div>
-      <div class="reg-label">// CURSO</div>
-      <input class="reg-input" id="reg-curso" type="text" placeholder="Ej: 6" maxlength="10">
+    <div id="dni-wrap" style="display:none;">
+      <div class="reg-label">// INGRESÁ TU DNI</div>
+      <input class="reg-input" id="reg-dni" type="number" placeholder="Ej: 48123456" maxlength="10"
+             oninput="limpiarErrorDni()" onkeydown="if(event.key==='Enter') guardarRegistro()">
+      <div id="dni-error" style="font-size:.7rem;color:var(--red);min-height:1.2rem;margin-top:.35rem;letter-spacing:.05em;"></div>
     </div>
-    <button class="btn btn-primary" onclick="guardarRegistro()">CONTINUAR →</button>
-    <div class="reg-hint">Tus datos se usan solo para el registro del quiz.</div>
+    <button class="btn btn-primary" id="btn-ingresar" onclick="guardarRegistro()" style="opacity:.4;pointer-events:none;">INGRESAR →</button>
+    <div class="reg-hint">Seleccioná tu nombre y verificá con tu DNI.</div>
   </div>
 </div>
 
@@ -544,12 +574,122 @@ sabio: [
 
 // ══ CONFIGURACIÓN ════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxHuPBB9MW0pMXNh-i8m48T3DFULKKAMxdu6lzkYRPO20JSPp4OCInpMrKDWrzDhHnN/exec';
+const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/1ejFhrVdkjLVwlPp74EoK_J4wRANXo46KIKQk7iyga6E/export?format=csv&gid=1287444107';
 const QUIZ_TEMA   = 4;
 const QUIZ_UNIDAD = 1;
-const LS_KEY      = 'chronos_asombro_jugador';
+const LS_KEY      = 'chronos_asombro_jugador_v2';
 
-let jugador     = { nombre:'', apellido:'', curso:'' };
+let jugador     = { dni:'', nombre:'', apellido:'' };
 let nivelActual = '';
+
+// ── SELECTOR DE ALUMNOS ──────────────────────────────────────────────────────
+let alumnos = [];
+let alumnoSeleccionado = null;
+
+// Lista local sincronizada con la hoja — editar aquí si cambia el padrón
+const ALUMNOS_LOCAL = [
+  { dni:'49343611', full:'ANDRADE Lucas Fabricio' },
+  { dni:'49504986', full:'CABRAL Abigail Milagros' },
+  { dni:'48957389', full:'ARGAÑARAZ Mia Constanza' },
+  { dni:'49208638', full:'DIAZ Tomas Leonel' },
+  { dni:'49343771', full:'DIAZ Juan Antonio' },
+  { dni:'48284385', full:'FERNANDEZ Julio' },
+  { dni:'49343439', full:'GALVAN Ana Lucia' },
+  { dni:'49208888', full:'GARNICA Rubi' },
+  { dni:'48419018', full:'GRAMAJO Angel Leonel' },
+  { dni:'48999999', full:'ISNARDO Benjamin' },
+  { dni:'49444129', full:'JUAREZ Luz Tamara' },
+  { dni:'49150607', full:'MANSILLA PEREA Eunice Jazmin' },
+  { dni:'47148074', full:'PACHECO Braian Benjamin' },
+  { dni:'49209782', full:'SIMON Marisol Alejandra' },
+  { dni:'48346305', full:'TORRES Nahuel Agustin' },
+];
+
+function parsearAlumnos(rawList){
+  return rawList.map(a=>{
+    const words = a.full.trim().split(/\s+/).filter(Boolean);
+    return { dni: a.dni, apellido: words[0]||'', nombre: words.slice(1).join(' '), full: a.full };
+  }).sort((a,b)=>a.apellido.localeCompare(b.apellido,'es'));
+}
+
+function parsearCSV(txt){
+  const lines = txt.trim().split('\n').slice(1);
+  return lines.map(line=>{
+    const parts = line.split(',');
+    const dni = parts[0].trim().replace(/"/g,'');
+    const full = parts.slice(1).join(',').trim().replace(/"/g,'');
+    return { dni, full };
+  }).filter(a=>a.dni && a.full);
+}
+
+async function cargarAlumnos(){
+  // Intentar desde Sheets; si falla usar lista local
+  try{
+    const ctrl = new AbortController();
+    setTimeout(()=>ctrl.abort(), 4000); // timeout 4s
+    const r = await fetch(SHEETS_CSV, { signal: ctrl.signal });
+    if(!r.ok) throw new Error('http '+r.status);
+    const txt = await r.text();
+    const raw = parsearCSV(txt);
+    if(raw.length < 3) throw new Error('datos insuficientes');
+    alumnos = parsearAlumnos(raw);
+  } catch(e){
+    alumnos = parsearAlumnos(ALUMNOS_LOCAL);
+  }
+  renderAlumnos(alumnos);
+  // Si había sesión guardada, pre-seleccionar
+  const saved = JSON.parse(localStorage.getItem(LS_KEY)||'null');
+  if(saved && saved.dni){
+    const match = alumnos.find(a=>a.dni===saved.dni);
+    if(match) _marcarSeleccion(match);
+  }
+}
+
+function renderAlumnos(lista){
+  const cont = document.getElementById('alumno-list');
+  if(!lista.length){
+    cont.innerHTML='<div class="alumno-loading">— Sin resultados</div>';
+    return;
+  }
+  cont.innerHTML = lista.map(a=>`
+    <div class="alumno-item${alumnoSeleccionado&&alumnoSeleccionado.dni===a.dni?' selected':''}"
+         onclick="seleccionarAlumno('${a.dni}')" data-dni="${a.dni}">
+      <strong>${a.apellido}</strong><span class="alumno-nombres">&nbsp;${a.nombre}</span>
+    </div>`).join('');
+}
+
+function filtrarAlumnos(){
+  const q = document.getElementById('reg-search').value.trim().toLowerCase();
+  const filtered = q
+    ? alumnos.filter(a=>a.apellido.toLowerCase().includes(q)||a.nombre.toLowerCase().includes(q))
+    : alumnos;
+  renderAlumnos(filtered);
+}
+
+function seleccionarAlumno(dni){
+  alumnoSeleccionado = alumnos.find(a=>a.dni===dni)||null;
+  if(!alumnoSeleccionado) return;
+  _marcarSeleccion(alumnoSeleccionado);
+}
+
+function _marcarSeleccion(alumno){
+  alumnoSeleccionado = alumno;
+  document.querySelectorAll('.alumno-item').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.dni===alumno.dni);
+  });
+  // Mostrar campo DNI y habilitar botón
+  const wrap = document.getElementById('dni-wrap');
+  wrap.style.display = 'block';
+  document.getElementById('reg-dni').value = '';
+  document.getElementById('dni-error').textContent = '';
+  const btn = document.getElementById('btn-ingresar');
+  btn.style.opacity='1'; btn.style.pointerEvents='auto';
+  setTimeout(()=>document.getElementById('reg-dni').focus(), 80);
+}
+
+function limpiarErrorDni(){
+  document.getElementById('dni-error').textContent='';
+}
 let preguntas   = [];
 let qIdx = 0, score = 0, combo = 0, maxCombo = 0;
 let correctas = 0, cntAgotado = 0;
@@ -567,15 +707,31 @@ function irA(id){
 }
 
 function guardarRegistro(){
-  const n = document.getElementById('reg-nombre').value.trim();
-  const a = document.getElementById('reg-apellido').value.trim();
-  const c = document.getElementById('reg-curso').value.trim();
-  if(!n||!a||!c){ alert('Completá todos los campos.'); return; }
-  jugador = {nombre:n, apellido:a, curso:c};
+  if(!alumnoSeleccionado){ return; }
+  const dniIngresado = document.getElementById('reg-dni').value.trim();
+  if(!dniIngresado){
+    document.getElementById('dni-error').textContent = '⚠ Ingresá tu DNI para continuar.';
+    document.getElementById('reg-dni').focus();
+    return;
+  }
+  if(dniIngresado !== alumnoSeleccionado.dni){
+    document.getElementById('dni-error').textContent = '✗ DNI incorrecto. Verificá e intentá de nuevo.';
+    document.getElementById('reg-dni').select();
+    return;
+  }
+  jugador = {
+    dni:      alumnoSeleccionado.dni,
+    apellido: alumnoSeleccionado.apellido,
+    nombre:   alumnoSeleccionado.nombre
+  };
   localStorage.setItem(LS_KEY, JSON.stringify(jugador));
-  document.getElementById('nivel-player-name').textContent =
-    `// ${n.toUpperCase()} ${a.toUpperCase()} · ${c.toUpperCase()}`;
+  _setNivelPlayerName();
   irA('screen-nivel');
+}
+
+function _setNivelPlayerName(){
+  document.getElementById('nivel-player-name').textContent =
+    `// ${jugador.apellido.toUpperCase()} ${jugador.nombre.toUpperCase()} · DNI ${jugador.dni}`;
 }
 
 function irNivel(){ clearInterval(timerInterval); irA('screen-nivel'); }
@@ -749,7 +905,7 @@ function enviarResultado(pct,rango){
   const aprobado=pct>=pctAprobacion?'SÍ':'NO';
 
   const payload={
-    nombre:jugador.nombre, apellido:jugador.apellido, curso:jugador.curso,
+    dni:jugador.dni, nombre:jugador.nombre, apellido:jugador.apellido,
     nivel:{novato:1,guerra:2,sabio:3}[nivelActual],
     score, precision:pct, pctAprobacion, aprobado,
     correctas, incorrectas,
@@ -787,16 +943,18 @@ function crearParticulas(color,n){
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 (function init(){
-  const d=JSON.parse(localStorage.getItem(LS_KEY)||'null');
-  if(d&&d.nombre){
-    jugador=d;
-    document.getElementById('nivel-player-name').textContent=
-      `// ${d.nombre.toUpperCase()} ${d.apellido.toUpperCase()} · ${d.curso.toUpperCase()}`;
-    document.getElementById('reg-nombre').value=d.nombre;
-    document.getElementById('reg-apellido').value=d.apellido;
-    document.getElementById('reg-curso').value=d.curso;
-    irA('screen-intro');
+  const d = JSON.parse(localStorage.getItem(LS_KEY)||'null');
+  if(d && d.dni){
+    jugador = d;
+    alumnoSeleccionado = d;
+    _setNivelPlayerName();
+    // Sesión previa válida: mostrar DNI ya confirmado, habilitar botón directamente
+    document.getElementById('dni-wrap').style.display = 'block';
+    document.getElementById('reg-dni').value = d.dni;
+    const btn = document.getElementById('btn-ingresar');
+    btn.style.opacity='1'; btn.style.pointerEvents='auto';
   }
+  cargarAlumnos();
 })();
 </script>
 </body>
